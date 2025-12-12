@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Tapestry Lab</title>
+    <style>
+        /* --- RESET & BASIC SETUP --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Courier New', Courier, monospace; 
+            overflow: hidden; /* Prevents scroll bars, keeps it app-like */
+            background-color: #0d1b1e; /* Dark deep jungle green */
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* --- THE STAGE (Container) --- */
+        #garden-stage {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            perspective: 1000px; /* Gives 3D depth */
+        }
+
+        /* --- LAYER 1: BACKGROUND (The Deep Jungle) --- */
+        .layer-bg {
+            position: absolute;
+            top: -5%; left: -5%; width: 110%; height: 110%;
+            background: radial-gradient(circle at 50% 50%, #1a3c34 0%, #05110e 80%);
+            z-index: 0;
+            /* Placeholder for a real jungle background image */
+            /* background-image: url('your-jungle-bg.jpg'); background-size: cover; */
+        }
+
+        /* --- LAYER 2: THE CONTENT PLANE (Windows) --- */
+        .layer-content {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10;
+            pointer-events: none; /* Let clicks pass through empty spaces */
+        }
+
+        /* The Window Component */
+        .window-node {
+            position: absolute;
+            width: 300px;
+            background: #f4f4f0;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            overflow: hidden;
+            pointer-events: auto; /* Re-enable clicks for the window */
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .window-node:hover {
+            transform: scale(1.02) translateY(-5px);
+            z-index: 15; /* Pop slightly above siblings */
+            box-shadow: 0 0 15px #4ADE80; /* Glow effect */
+        }
+
+        .window-header {
+            background: #e0e0e0;
+            padding: 8px 12px;
+            display: flex;
+            gap: 6px;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot.pink { background: #ff5f5f; }
+        .dot.grey { background: #bdc3c7; }
+
+        .window-body {
+            padding: 20px;
+        }
+        
+        .window-body h2 { font-size: 1.1rem; margin-bottom: 10px; color: #2c3e50; }
+        .window-body p { font-size: 0.85rem; line-height: 1.5; color: #555; }
+        .meta-tag { 
+            display: inline-block; margin-top: 10px; 
+            font-size: 0.7rem; color: #166534; 
+            border: 1px solid #166534; padding: 2px 6px; rounded: 4px;
+        }
+
+        /* --- LAYER 3: FOREGROUND (The Overgrowth) --- */
+        /* These act as the leaves in front of the windows */
+        .layer-fg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 20;
+            pointer-events: none; /* Crucial: lets you click windows BEHIND the leaves */
+        }
+
+        /* CSS Shapes to simulate leaves for the mock */
+        .leaf-shape {
+            position: absolute;
+            background: #1e5c25;
+            opacity: 0.9;
+            border-radius: 0 80% 0 80%;
+            box-shadow: -5px 5px 10px rgba(0,0,0,0.3);
+        }
+
+        /* --- MODAL (Full Screen View) --- */
+        #modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 100;
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        #modal-content {
+            background: #fff; width: 60%; height: 80%; 
+            padding: 40px; border-radius: 8px; 
+            overflow-y: auto; font-family: 'Georgia', serif;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="garden-stage">
+        
+        <div class="layer-bg" id="bg-layer"></div>
+
+        <div class="layer-content">
+            
+            <div class="window-node" style="top: 20%; left: 35%;" onclick="openPost('The Human Algorithm', 'How do we measure authenticity when AI can replicate empathy?')">
+                <div class="window-header">
+                    <div class="dot pink"></div><div class="dot grey"></div>
+                </div>
+                <div class="window-body">
+                    <h2>The Human Algorithm</h2>
+                    <p>Exploring the intersection of biology and code...</p>
+                    <span class="meta-tag">Society</span>
+                </div>
+            </div>
+
+            <div class="window-node" style="top: 50%; left: 60%;" onclick="openPost('Digital Gardens', 'Moving away from streams and feeds, towards distinct nodes of thought.')">
+                <div class="window-header">
+                    <div class="dot pink"></div><div class="dot grey"></div>
+                </div>
+                <div class="window-body">
+                    <h2>Digital Gardens</h2>
+                    <p>Why we need static, curated spaces on the web...</p>
+                    <span class="meta-tag">Structure</span>
+                </div>
+            </div>
+
+            <div class="window-node" style="top: 65%; left: 15%;" onclick="openPost('Future Wealth', 'Labor is no longer the primary driver of value.')">
+                <div class="window-header">
+                    <div class="dot pink"></div><div class="dot grey"></div>
+                </div>
+                <div class="window-body">
+                    <h2>Future Wealth</h2>
+                    <p>Analyzing post-labor economics...</p>
+                    <span class="meta-tag">Economics</span>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="layer-fg" id="fg-layer">
+            <div class="leaf-shape" style="bottom: -50px; left: -50px; width: 400px; height: 300px; transform: rotate(-20deg);"></div>
+            
+            <div class="leaf-shape" style="bottom: 10%; right: 20%; width: 250px; height: 150px; transform: rotate(45deg); background: #14401a;"></div>
+
+            <div class="leaf-shape" style="top: -50px; right: -50px; width: 300px; height: 300px; transform: rotate(190deg);"></div>
+        </div>
+
+    </div>
+
+    <div id="modal-overlay" onclick="closeModal()">
+        <div id="modal-content" onclick="event.stopPropagation()">
+            <h1 id="modal-title" style="margin-bottom: 20px;">Title</h1>
+            <p id="modal-text" style="line-height: 1.6; font-size: 1.2rem;">Content...</p>
+            <br>
+            <button onclick="closeModal()" style="padding: 10px 20px; cursor: pointer;">Close Window</button>
+        </div>
+    </div>
+
+    <script>
+        // --- PARALLAX EFFECT ---
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+
+            // Move Background Slowly
+            const bg = document.getElementById('bg-layer');
+            bg.style.transform = `translate(-${x * 20}px, -${y * 20}px)`;
+
+            // Move Foreground Quickly (Creates depth)
+            const fg = document.getElementById('fg-layer');
+            fg.style.transform = `translate(-${x * 60}px, -${y * 60}px)`;
+        });
+
+        // --- MODAL LOGIC ---
+        const modal = document.getElementById('modal-overlay');
+        const mTitle = document.getElementById('modal-title');
+        const mText = document.getElementById('modal-text');
+
+        function openPost(title, text) {
+            mTitle.innerText = title;
+            // In a real version, this would fetch a .html file or markdown content
+            mText.innerText = text + " \n\n[Full article content would load here...]";
+            
+            modal.style.display = 'flex';
+            setTimeout(() => { modal.style.opacity = '1'; }, 10);
+        }
+
+        function closeModal() {
+            modal.style.opacity = '0';
+            setTimeout(() => { modal.style.display = 'none'; }, 300);
+        }
+    </script>
+</body>
+</html>
